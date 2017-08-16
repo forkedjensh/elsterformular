@@ -1,0 +1,30 @@
+---
+
+- hosts: all
+  vars:
+      elsterurl: 'https://download.elster.de/aktuell/ElsterFormularPrivat.exe'
+      installpath: 'C:\ElsterFormular'
+
+  tasks:
+
+      - name: Set timezone
+        raw: tzutil /s “W. Europe Standard Time”
+
+      - name: Set keyboard layout
+        raw: Set-WinUserLanguageList -Force de-DE
+
+      - name: Install software
+        win_chocolatey: name={{ item }}
+        with_items:
+            - procexp
+            - vim
+            - firefox
+
+      #- name: Remove old ElsterFormular folder
+        #win_file: path={{ installpath }} state=absent
+
+      #- name: Install ElsterFormular
+        #win_package:
+            #path: '{{ elsterurl }}'
+            #product_id: ElsterFormular
+            #arguments: '--mode unattended --prefix {{ installpath }}'
