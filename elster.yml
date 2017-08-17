@@ -4,27 +4,41 @@
   vars:
       elsterurl: 'https://download.elster.de/aktuell/ElsterFormularPrivat.exe'
       installpath: 'C:\ElsterFormular'
+      tempdir: 'C:\temp'
 
   tasks:
 
-      - name: Set timezone
-        raw: tzutil /s “W. Europe Standard Time”
+    - name: Set timezone
+      raw: tzutil /s “W. Europe Standard Time”
+ 
+    - name: Set keyboard layout
+      raw: Set-WinUserLanguageList -Force de-DE
+ 
+    - name: Install software
+      win_chocolatey: name={{ item }}
+      with_items:
+          - procexp
+          - vim
+          - firefox
+          - psexec
+ 
+    - name: Remove old ElsterFormular folder
+      win_file: path={{ installpath }} state=absent
+ 
+    - name: Ensure temp folder exists
+      win_file:
+        path: '{{ tempdir }}'
+        state: directory
+ 
+    - name: Download ElsterFormular installer
+      win_get_url:
+        url: '{{ elsterurl }}'
+        dest: '{{ tempdir }}\ElsterFormularPrivat.exe'
+ 
+    - name: Install ElsterFormular
+      win_command: 'psexec -accepteula -h -u vagrant -p vagrant {{ tempdir }}\ElsterFormularPrivat.exe --mode unattended --prefix {{ installpath }}'
 
-      - name: Set keyboard layout
-        raw: Set-WinUserLanguageList -Force de-DE
-
-      - name: Install software
-        win_chocolatey: name={{ item }}
-        with_items:
-            - procexp
-            - vim
-            - firefox
-
-      #- name: Remove old ElsterFormular folder
-        #win_file: path={{ installpath }} state=absent
-
-      #- name: Install ElsterFormular
-        #win_package:
-            #path: '{{ elsterurl }}'
-            #product_id: ElsterFormular
-            #arguments: '--mode unattended --prefix {{ installpath }}'
+    - name: Cleanup temp files
+      win_file:
+        path: '{{ tempdir }}\ElsterFormularPrivat.exe'
+        state: absent
